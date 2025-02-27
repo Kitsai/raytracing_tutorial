@@ -1,0 +1,23 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+
+Language: Cpp
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+AllowShortBlocksOnASingleLine: Never
+ColumnLimit: 120
+BreakBeforeBinaryOperators: None
+SpaceBeforeParens: Never
+SpaceAfterCStyleCast: true
+
+SortIncludes: CaseSensitive
+
+IncludeBlocks: Preserve
+IncludeCategories:
+  - Regex: '^"game/Game.h"'
+    Priority: 0
+  - Regex: "resource_management/ResourceManager.h"
+    Priority: 1
+  - Regex: ".*"
+    Priority: 10
