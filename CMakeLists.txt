@@ -6,6 +6,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENDIONS OFF)
 
-file(GLOB_RECURSE header_files CONFIGURE_DEPENDS "*.h")
+file(GLOB_RECURSE rtw_header_files CONFIGURE_DEPENDS "rt-weekend/*.h")
 
-add_executable(RT_weekend main.cc ${header_files})
+add_executable(RT_weekend rt-weekend/main.cc ${rtw_header_files})
