@@ -45,6 +45,7 @@ class camera {
                 write_color(buffer, pixel_samples_scale * pixel_color);
             }
         }
+
         myfile.open("image.ppm");
         myfile << buffer.str();
         myfile.close();
@@ -99,7 +100,9 @@ class camera {
 
         auto ray_origin = (defocus_angle <= 0) ? center : defocus_disk_sample();
         auto ray_direction = pixel_sample - ray_origin;
-        return {ray_origin, ray_direction};
+        auto ray_time = random_double();
+
+        return {ray_origin, ray_direction, ray_time};
     }
 
     [[nodiscard]] vec3 sample_square() const { return {random_double() - 0.5, random_double() - .5, 0}; }
