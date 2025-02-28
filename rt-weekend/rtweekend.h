@@ -3,7 +3,6 @@
 #include <limits>
 #include <memory>
 
-#include "vec3.h"
 #include <random>
 
 using std::make_shared;
@@ -23,7 +22,3 @@ inline double random_double() {
 inline double random_double(double min, double max) {
     return min + (max-min) * random_double();
 }
-
-#include "color.h"
-#include "ray.h"
-#include "interval.h"

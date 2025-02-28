@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rtweekend.h"
 #include <array>
 #include <cmath>
 #include <iostream>
@@ -48,6 +49,15 @@ class vec3 {
     [[nodiscard]] double length() const { return std::sqrt(length_squared()); }
 
     [[nodiscard]] double length_squared() const { return e[0] * e[0] + e[1] * e[1] + e[2] * e[2]; }
+
+    static vec3 random() {
+        return {random_double(), random_double(), random_double()};
+    }
+
+    static vec3 random(double min, double max) {
+        return {random_double(min,max), random_double(min,max), random_double(min,max)};
+    }
+
 };
 
 using point3 = vec3;
@@ -79,4 +89,21 @@ inline vec3 unit_vector(const vec3& v) {
     if(len == 0.0)
         throw std::invalid_argument("Cannot compute unit vector of zero length vector");
     return v / v.length();
+}
+
+inline vec3 random_unit_vector() {
+    while(true) {
+        auto p = vec3::random(-1, 1);
+        auto lensq = p.length_squared();
+        if(1e-160 < lensq && lensq <= 1)
+            return p / sqrt(lensq);
+    }
+}
+
+inline vec3 random_on_hemisphere(const vec3& normal) {
+    vec3 on_unit_sphere = random_unit_vector();
+    if(dot(on_unit_sphere, normal) > 0.0)
+        return on_unit_sphere;
+    else
+        return -on_unit_sphere;
 }
