@@ -3,10 +3,11 @@
 #include "color.h"
 #include "hittable.h"
 #include "interval.h"
+#include "material.h"
 #include "ray.h"
 #include "rtweekend.h"
 #include "vec3.h"
-#include "material.h"
+#include <fstream>
 
 class camera {
   public:
@@ -26,22 +27,26 @@ class camera {
     void render(const hittable& world) {
         initialize();
 
-        std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
+        std::ofstream myfile;
+        myfile.open("image.ppm");
 
-    for(int j = 0; j < image_height; j++) {
-        std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
-        for(int i = 0; i < image_width; i++) {
-            color pixel_color(0,0,0);
-            for(int sample = 0; sample < samples_per_pixel; sample++) {
-                ray r = get_ray(i, j);
-                pixel_color += ray_color(r, max_depth, world);
+        myfile << "P3\n" << image_width << " " << image_height << "\n255\n";
+
+        for(int j = 0; j < image_height; j++) {
+            std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+            for(int i = 0; i < image_width; i++) {
+                color pixel_color(0, 0, 0);
+                for(int sample = 0; sample < samples_per_pixel; sample++) {
+                    ray r = get_ray(i, j);
+                    pixel_color += ray_color(r, max_depth, world);
+                }
+
+                write_color(myfile, pixel_samples_scale * pixel_color);
             }
-
-            write_color(std::cout, pixel_samples_scale * pixel_color);
         }
-    }
 
-    std::clog << "\rDone.                 \n";
+        myfile.close();
+        std::clog << "\rDone.                 \n";
     }
 
   private:
@@ -86,25 +91,25 @@ class camera {
         defocus_disk_v = v * defocus_radius;
     }
 
-    ray get_ray(int i, int j) const {
+    [[nodiscard]] ray get_ray(int i, int j) const {
         auto offset = sample_square();
         auto pixel_sample = pixel00_loc + ((i + offset.x()) * pixel_delta_u) + ((j + offset.y()) * pixel_delta_v);
 
         auto ray_origin = (defocus_angle <= 0) ? center : defocus_disk_sample();
         auto ray_direction = pixel_sample - ray_origin;
-        return { ray_origin, ray_direction};
+        return {ray_origin, ray_direction};
     }
 
-    vec3 sample_square() const { return {random_double() - 0.5, random_double() - .5, 0}; }
+    [[nodiscard]] vec3 sample_square() const { return {random_double() - 0.5, random_double() - .5, 0}; }
 
-    point3 defocus_disk_sample() const {
+    [[nodiscard]] point3 defocus_disk_sample() const {
         auto p = random_in_unit_disk();
         return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
     }
 
     color ray_color(const ray& r, int depth, const hittable& world) const {
         if(depth <= 0)
-            return {0,0,0};
+            return {0, 0, 0};
         hit_record rec;
 
         if(world.hit(r, interval(0.001, infinity), rec)) {
@@ -112,11 +117,11 @@ class camera {
             color attenuation;
             if(rec.mat->scatter(r, rec, attenuation, scattered))
                 return attenuation * ray_color(scattered, depth - 1, world);
-            return {0,0,0};
+            return {0, 0, 0};
         }
 
         vec3 unit_direction = unit_vector(r.direction());
         auto a = .5 * (unit_direction.y() + 1.0);
-        return (1.0-a)*color(1,1,1) + a*color(.5,.7,1);
+        return (1.0 - a) * color(1, 1, 1) + a * color(.5, .7, 1);
     }
 };
