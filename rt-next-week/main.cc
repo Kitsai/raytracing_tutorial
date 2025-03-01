@@ -3,11 +3,13 @@
 #include "material.h"
 #include "rtweekend.h"
 
+#include "bvh.h"
 #include "camera.h"
 #include "hittable.h"
 #include "hittable_list.h"
 #include "sphere.h"
 #include "vec3.h"
+#include <memory>
 
 color ray_color(const ray& r, const hittable& world) {
 
@@ -73,6 +75,8 @@ int main() {
 
     auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
     world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
+
+    world = hittable_list(make_shared<bvh_node>(world));
 
     camera cam;
 

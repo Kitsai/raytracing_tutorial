@@ -1,5 +1,6 @@
 #pragma once
 
+#include "aabb.h"
 #include "interval.h"
 #include "ray.h"
 #include "rtweekend.h"
@@ -25,4 +26,5 @@ class hittable {
   public:
     virtual ~hittable() = default;
     virtual bool hit(const ray& r, interval ray_t, hit_record& rec) const = 0;
+    [[nodiscard]] virtual aabb bounding_box() const = 0;
 };
