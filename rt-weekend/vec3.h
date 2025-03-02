@@ -50,15 +50,13 @@ class vec3 {
 
     [[nodiscard]] double length_squared() const { return e[0] * e[0] + e[1] * e[1] + e[2] * e[2]; }
 
-    static vec3 random() {
-        return {random_double(), random_double(), random_double()};
-    }
+    static vec3 random() { return {random_double(), random_double(), random_double()}; }
 
     static vec3 random(double min, double max) {
-        return {random_double(min,max), random_double(min,max), random_double(min,max)};
+        return {random_double(min, max), random_double(min, max), random_double(min, max)};
     }
 
-    bool near_zero() const {
+    [[nodiscard]] bool near_zero() const {
         auto s = 1e-8;
         return (std::fabs(e[0]) < s) && (std::fabs(e[1]) < s) && (std::fabs(e[2]) < s);
     }
