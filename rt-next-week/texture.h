@@ -2,6 +2,7 @@
 
 #include "color.h"
 #include "interval.h"
+#include "perlin.h"
 #include "rtw_image.h"
 #include "rtweekend.h"
 #include "vec3.h"
@@ -72,4 +73,17 @@ class image_texture : public texture {
 
   private:
     rtw_image image;
+};
+
+class noise_texture : public texture {
+  public:
+    noise_texture(double scale) : scale(scale) {};
+
+    [[nodiscard]] color value(double u, double v, const point3& p) const override {
+        return color(.5, .5, .5) * (1 + std::sin(scale * p.z() + 10 * noise.turb(p, 7)));
+    }
+
+  private:
+    perlin noise;
+    double scale;
 };
