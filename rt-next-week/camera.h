@@ -6,8 +6,10 @@
 #include "material.h"
 #include "ray.h"
 #include "rtweekend.h"
+#include "thread-pool.h"
 #include "vec3.h"
 #include <fstream>
+#include <mutex>
 #include <sstream>
 
 class camera {
@@ -39,14 +41,23 @@ class camera {
             for(int i = 0; i < image_width; i++) {
                 color pixel_color(0, 0, 0);
                 for(int sample = 0; sample < samples_per_pixel; sample++) {
-                    ray r = get_ray(i, j);
-                    pixel_color += ray_color(r, max_depth, world);
+                    threads.add_job([&world, &pixel_color, i, j, this] {
+                        ray r = get_ray(i, j);
+                        {
+                            std::lock_guard<std::mutex> lock(cam_mutex);
+                            pixel_color += ray_color(r, max_depth, world);
+                        }
+                    });
                 }
+                threads.wait_for_completion();
 
                 write_color(buffer, pixel_samples_scale * pixel_color);
             }
         }
 
+        threads.end();
+
+        std::clog << "\rScanlines remaining: " << 0 << ' ' << std::flush;
         myfile.open("image.ppm");
         myfile << buffer.str();
         myfile.close();
@@ -63,6 +74,8 @@ class camera {
     vec3 u, v, w;
     vec3 defocus_disk_u;
     vec3 defocus_disk_v;
+    thread_pool threads;
+    std::mutex cam_mutex;
 
     void initialize() {
         image_height = int(image_width / aspect_ratio);
