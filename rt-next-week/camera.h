@@ -8,6 +8,7 @@
 #include "rtweekend.h"
 #include "thread-pool.h"
 #include "vec3.h"
+#include <atomic>
 #include <fstream>
 #include <mutex>
 #include <sstream>
@@ -36,28 +37,36 @@ class camera {
 
         buffer << "P3\n" << image_width << " " << image_height << "\n255\n";
 
-        for(int j = 0; j < image_height; j++) {
-            std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
-            for(int i = 0; i < image_width; i++) {
-                color pixel_color(0, 0, 0);
-                for(int sample = 0; sample < samples_per_pixel; sample++) {
-                    threads.add_job([&world, &pixel_color, i, j, this] {
-                        ray r = get_ray(i, j);
-                        {
-                            std::lock_guard<std::mutex> lock(cam_mutex);
-                            pixel_color += ray_color(r, max_depth, world);
-                        }
-                    });
-                }
-                threads.wait_for_completion();
+        std::vector<color> pixels(image_width * image_height, color(0, 0, 0));
+        lines_done = 0;
 
-                write_color(buffer, pixel_samples_scale * pixel_color);
+        // Create one job per row instead of per sample
+        print_status();
+        for(int j = 0; j < image_height; j++) {
+            threads.add_job([&world, &pixels, j, this] {
+                for(int i = 0; i < image_width; i++) {
+                    color pixel_color(0, 0, 0);
+                    for(int sample = 0; sample < samples_per_pixel; sample++) {
+                        ray r = get_ray(i, j);
+                        pixel_color += ray_color(r, max_depth, world);
+                    }
+                    pixels[j * image_width + i] = pixel_color;
+                }
+                lines_done = lines_done + 1;
+                print_status();
+            });
+        }
+
+        threads.wait_for_completion();
+        threads.end();
+
+        // Write the image after all calculations are done
+        for(int j = 0; j < image_height; j++) {
+            for(int i = 0; i < image_width; i++) {
+                write_color(buffer, pixel_samples_scale * pixels[j * image_width + i]);
             }
         }
 
-        threads.end();
-
-        std::clog << "\rScanlines remaining: " << 0 << ' ' << std::flush;
         myfile.open("image.ppm");
         myfile << buffer.str();
         myfile.close();
@@ -76,6 +85,7 @@ class camera {
     vec3 defocus_disk_v;
     thread_pool threads;
     std::mutex cam_mutex;
+    std::atomic<double> lines_done{0};
 
     void initialize() {
         image_height = int(image_width / aspect_ratio);
@@ -145,5 +155,23 @@ class camera {
         color color_from_scatter = attenuation * ray_color(scattered, depth - 1, world);
 
         return color_from_emission + color_from_scatter;
+    }
+
+    void print_status() {
+        constexpr int bar_width = 70;
+        constexpr std::array<char, 4> load_order = {'|', '/', '|', '\\'};
+        static std::atomic<int> cycle = 0;
+
+        std::string out = {load_order[cycle] + " "};
+        cycle = (cycle + 1) % 4;
+        const int pos = lines_done / image_height * bar_width;
+        for(int i = 0; i < bar_width; i++) {
+            if(i < pos)
+                out += "█";
+            else
+                out += " ";
+        }
+        out += " ";
+        std::clog << "\r" << out << int((lines_done * 100) / image_width) << "%" << std::flush;
     }
 };

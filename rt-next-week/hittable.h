@@ -90,7 +90,7 @@ class rotate_y : public hittable {
 
     bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
         auto origin = point3((cos_theta * r.origin().x()) - (sin_theta * r.origin().z()), r.origin().y(),
-                             (sin_theta * r.direction().x()) + (cos_theta * r.direction().z()));
+                             (sin_theta * r.origin().x()) + (cos_theta * r.origin().z()));
 
         auto direction = vec3((cos_theta * r.direction().x()) - (sin_theta * r.direction().z()), r.direction().y(),
                               (sin_theta * r.direction().x()) + (cos_theta * r.direction().z()));
